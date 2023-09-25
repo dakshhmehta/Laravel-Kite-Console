@@ -38,8 +38,7 @@ class Stock extends Model
     }
 
     /**
-     * Returns all the valid symbols we have in database for which UDTSMonitor and Intraday Monitor
-     * has to operate on.
+     * Returns all the valid symbols we have in database for each operations to operate on.
      * @return array
      */
     public static function getAllSymbols()

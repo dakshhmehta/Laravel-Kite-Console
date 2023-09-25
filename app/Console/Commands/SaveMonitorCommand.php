@@ -9,18 +9,7 @@ use App\User;
 use Illuminate\Console\Command;
 
 /**
- * This command is used to fetch the End of the day data for all the stocks
- * for https://udtsmonitor.com and https://intraday.udtsmonitor.com
- *
- * The command is executed by cronjob on the server every day from Monday to Friday at 07:30 PM.
- *
  * <p>Command is <b>php artisan monitor:save</b></p>
- *
- * <p>In case if a stock shows incorrect value on UDTSMonitor for day/week/month, It is possible to fix the same
- * with this command.
- *
- * For example, if INFY shows wrong data and needs a correction, we can pull up the data again anytime for the same<br/>
- * <B>php artisan monitor:save --symbols=INFY,HDFCBANK</b></p>
  *
  * <p>It is also possible to fetch data of past days for combinations of symbols by combining <b>--days</b> input.<Br/>
  * If we extend the example above,<br/>
@@ -88,14 +77,5 @@ class SaveMonitorCommand extends Command
         $counter = 0;
 
         $monitor->getStocks();
-        // foreach ($monitor->getStocks() as &$stock) {
-        //     $this->info('Saving ' . $stock->symbol . ' for ' . $stock->date->format('d M, Y'));
-        //     $stock->save();
-        //     Stock::persistTrend($stock->symbol);
-        //     $counter++;
-        // }
-
-        // $admin = User::admins()->first();
-        // $admin->notify(new SendSMS("Monitor ran successfully."));
     }
 }
