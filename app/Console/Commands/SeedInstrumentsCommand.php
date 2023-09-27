@@ -46,6 +46,7 @@ class SeedInstrumentsCommand extends Command
         $symbols = explode(',', $this->option('symbols'));
 
         foreach ($instruments as &$i) {
+            dd($i);
             $instrument = Instrument::where('instrument_token', $i->instrument_token)->first();
 
             if ($instrument != null) { // Skip, already exist.
