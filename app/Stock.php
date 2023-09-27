@@ -19,8 +19,30 @@ class Stock extends Model
     const MONTH_CANDLES = 12;
 
     protected $casts = [
+        'date' => 'date',
         'intraday_trend' => 'boolean',
     ];
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::saving(
+            function ($stock) {
+                if (is_numeric($stock->id)) {
+                    static::where('symbol', $stock->symbol)
+                        ->where('date', $stock->date->format('Y-m-d'))->where('id', '!=', $stock->id)->delete();
+                }
+
+                return true;
+            }
+        );
+    }
+
+    public function cleanDuplicates(){
+        return static::where('symbol', $this->symbol)
+            ->where('date', $this->date->format('Y-m-d'))->where('id', '!=', $this->id)->delete();
+    }
 
     /**
      * Cache key used to fast up the execution of other functions
