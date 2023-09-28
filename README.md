@@ -9,6 +9,7 @@
 Log in is required everyday before executing commands.
 
 6. To save data, run `php artisan monitor:save --symbols=ITC` which will fetch data from the beginning and save it to database.
+7.  isin_code fix stocks table `php artisan isin:fix`
 7.  RSI Daily  `php artisan rsi:calculate --daily`
 8.  RSI Daily  `php artisan rsi:calculate --weekly`
 9.  RSI Daily  `php artisan rsi:calculate --monthly`
