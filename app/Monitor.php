@@ -94,14 +94,14 @@ class Monitor
     {
         $stocks = collect([]);
 
-        
+
         foreach ($this->result as &$s) {
             $fromDate = Carbon::parse('1993-01-01');
             $tillDate = (clone $fromDate)->endOfYear();
 
             echo 'Queued: ' . $s->tradingsymbol . "\n";
-            while($fromDate->lte(now())){
-                echo 'Storing for '.$fromDate->format('Y-m-d').' '.$tillDate->format('Y-m-d')."\n";
+            while ($fromDate->lte(now())) {
+                echo 'Storing for ' . $fromDate->format('Y-m-d') . ' ' . $tillDate->format('Y-m-d') . "\n";
 
                 dispatch(new SaveMonitorData($s->instrument_token, $fromDate, $tillDate));
                 $fromDate->addYears(1);

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Facade;
 
 return [
+    'cache_ttl' => 60 * 24,
 
     /*
     |--------------------------------------------------------------------------

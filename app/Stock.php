@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -108,5 +109,61 @@ class Stock extends Model
         $this->save();
 
         return $instrument->isin_code;
+    }
+
+    public function getMonthlyCandles($count = 1)
+    {
+        $key = md5(__METHOD__ . $this->getCacheKey() . $count);
+
+        if ($candles = \Cache::get($key, false)) {
+            return $candles;
+        }
+
+        if (Carbon::now()->endOfMonth()->isToday()) {
+            $previousMonth = Carbon::now()->startOfMonth();
+        } else {
+            $previousMonth = Carbon::now()->subMonths(1)->startOfMonth();
+        }
+        $candles = collect([]);
+
+        
+        while ($count > 0) {
+            $date  = clone $previousMonth;
+            $rates = static::where('symbol', $this->symbol)
+                ->where('date', '>=', $date->startOfMonth()->format('Y-m-d'))
+                ->where('date', '<=', $date->endOfMonth()->format('Y-m-d'))
+                ->orderBy('date', 'ASC')->get();
+
+            if ($rates->count() == 0) {
+                break;
+            }
+
+            $c = [];
+            foreach ($rates as &$rate) {
+                $c[] = ['open' => $rate->open, 'high' => $rate->high, 'low' => $rate->low, 'close' => $rate->close];
+            }
+
+            $candles[] = new Candle($c, $date->startOfMonth());
+
+            $count--;
+            $previousMonth = $previousMonth->subMonths(1);
+        }
+
+        $candles = array_values($candles->reverse()->toArray());
+
+        \Cache::put($key, $candles, config('app.cache_ttl'));
+
+        return $candles;
+    }
+
+    public static function allMonthlyCandles($symbol) {
+        $data = static::getBySymbol($symbol);
+        
+        $fromDate = Carbon::parse('1993-01-01');
+        $tillDate = Carbon::now();
+
+        $candles = $tillDate->diffInMonths($fromDate);
+
+        return $data->getMonthlyCandles($candles);
     }
 }

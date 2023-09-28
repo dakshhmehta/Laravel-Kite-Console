@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Instrument;
 use App\Models\DailyRSI;
+use App\Models\MonthlyRSI;
 use App\Stock;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -14,7 +16,7 @@ class CalculateRSICommand extends Command
      *
      * @var string
      */
-    protected $signature = 'rsi:calculate {month=current}';
+    protected $signature = 'rsi:calculate {type=daily} {--symbols=all}';
 
     /**
      * The console command description.
@@ -30,7 +32,29 @@ class CalculateRSICommand extends Command
      */
     public function handle()
     {
-        $symbols = Stock::getAllSymbols();
+        $type = $this->argument('type');
+
+        if ($this->option('symbols') == 'all') {
+            $symbols = Stock::getAllSymbols();
+        } else {
+            $symbols = explode(',', $this->option('symbols'));
+        }
+
+        if ($type == 'monthly') {
+            $this->calculateMonthly($symbols);
+        } elseif ($type == 'daily') {
+            $this->calculateDaily($symbols);
+        } else {
+            $this->error('Invalid type argument.');
+
+            return Command::FAILURE;
+        }
+
+        return Command::SUCCESS;
+    }
+
+    public function calculateDaily($symbols)
+    {
         foreach ($symbols as &$symbol) {
             $odata = Stock::where('symbol', $symbol)->orderBy('date', 'ASC')->get();
 
@@ -52,11 +76,41 @@ class CalculateRSICommand extends Command
                 $dailyRSI->rsi = $rsi['rsi'];
                 $dailyRSI->save();
 
-                $this->info("RSI (14, " . $data[count($data) - 1] . ", ".$odata[$i]->date->format('d-m-Y')."): " . $rsi['rsi']);
+                $this->info("RSI (14, " . $data[count($data) - 1] . ", " . $odata[$i]->date->format('d-m-Y') . "): " . $rsi['rsi']);
                 $previous = $rsi;
             }
         }
+    }
 
-        return Command::SUCCESS;
+    public function calculateMonthly($symbols)
+    {
+        foreach ($symbols as &$symbol) {
+            $instrument = Instrument::getBySymbol($symbol);
+            $odata = collect(Stock::allMonthlyCandles($symbol));
+
+            $period = 14;
+            $previous = [];
+
+            $this->error($symbol);
+
+            for ($i = $period; $i < count($odata); $i++) {
+                $data = $odata->pluck('close')->toArray();
+                $data = array_splice($data, $i - $period, $period + 1);
+
+                $rsi = rsi($data, $period, $previous);
+
+                $monthlyRSI = MonthlyRSI::firstOrNew([
+                    'isin' => $instrument->isin_code,
+                    'date' => $odata[$i]->date->format('Y-m-d'),
+                ]);
+                $monthlyRSI->rsi = $rsi['rsi'];
+                $monthlyRSI->save();
+
+                $this->info("RSI (14, " . $data[count($data) - 1] . ", " . $odata[$i]->date->format('d-m-Y') . "): " . $rsi['rsi']);
+                $this->warn($odata[$i]->open . ', ' . $odata[$i]->high . ', ' . $odata[$i]->low . ', ' . $odata[$i]->close);
+
+                $previous = $rsi;
+            }
+        }
     }
 }
