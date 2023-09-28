@@ -79,4 +79,20 @@ class Stock extends Model
     {
         return static::where('symbol', $code)->orderBy('date', 'DESC')->orderBy('updated_at', 'DESC')->first();
     }
+
+    public function getInstrument()
+    {
+        $i = Instrument::where('instrument_type', 'EQ')
+            ->where(function ($q) {
+                $q->whereIn('segment', ['NSE', 'INDICES']);
+            })->where('tradingsymbol', $this->symbol)
+            ->orderBy('tradingsymbol', 'ASC')
+            ->first();
+
+        try {
+            return $i;
+        } catch (\Exception $e) {
+            throw new \Exception("Instrument ID not found for " . $this->symbol);
+        }
+    }
 }

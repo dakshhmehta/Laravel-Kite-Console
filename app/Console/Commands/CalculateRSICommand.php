@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\DailyRSI;
 use App\Stock;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -29,9 +30,7 @@ class CalculateRSICommand extends Command
      */
     public function handle()
     {
-        // $symbols = Stock::getAllSymbols();
-        $symbols = ['ADANIPORTS'];
-
+        $symbols = Stock::getAllSymbols();
         foreach ($symbols as &$symbol) {
             $odata = Stock::where('symbol', $symbol)->orderBy('date', 'ASC')->get();
 
@@ -43,7 +42,15 @@ class CalculateRSICommand extends Command
             for ($i = $period; $i < count($odata); $i++) {
                 $data = $odata->pluck('close')->toArray();
                 $data = array_splice($data, $i - $period, $period + 1);
+
                 $rsi = rsi($data, $period, $previous);
+
+                $dailyRSI = DailyRSI::firstOrNew([
+                    'isin' => $odata[$i]->getInstrument()->isin_code,
+                    'date' => $odata[$i]->date->format('Y-m-d'),
+                ]);
+                $dailyRSI->rsi = $rsi['rsi'];
+                $dailyRSI->save();
 
                 $this->info("RSI (14, " . $data[count($data) - 1] . ", ".$odata[$i]->date->format('d-m-Y')."): " . $rsi['rsi']);
                 $previous = $rsi;
