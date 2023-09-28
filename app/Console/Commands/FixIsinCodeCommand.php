@@ -34,7 +34,7 @@ class FixIsinCodeCommand extends Command
         foreach($stocks as &$s){
             $instrument = Instrument::getBySymbol($s->symbol);
 
-            Stock::whereNull('isin')->update(['isin' => $instrument->isin_code]);
+            Stock::whereNull('isin')->where('symbol', $s)->update(['isin' => $instrument->isin_code]);
 
             $this->info($s->symbol.' updated');
         }
