@@ -43,6 +43,7 @@ class SaveMonitorData implements ShouldQueue
         foreach ($data as &$d) {
             $stock = new Stock(
                 [
+                    'isin' => $this->s->isin_code,
                     'symbol' => trim($this->s->tradingsymbol),
                     'date'   => Carbon::parse($d->date),
                     'open'   => $d->open,

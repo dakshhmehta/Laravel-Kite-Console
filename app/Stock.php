@@ -39,7 +39,8 @@ class Stock extends Model
         );
     }
 
-    public function cleanDuplicates(){
+    public function cleanDuplicates()
+    {
         return static::where('symbol', $this->symbol)
             ->where('date', $this->date->format('Y-m-d'))->where('id', '!=', $this->id)->delete();
     }
@@ -94,5 +95,18 @@ class Stock extends Model
         } catch (\Exception $e) {
             throw new \Exception("Instrument ID not found for " . $this->symbol);
         }
+    }
+
+    public function getIsinAttribute($val)
+    {
+        if ($val) {
+            return $val;
+        }
+
+        $instrument = $this->getInstrument();
+        $this->isin = $instrument->isin_code;
+        $this->save();
+
+        return $instrument->isin_code;
     }
 }
