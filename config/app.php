@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Facade;
 
 return [
+    'from_date' => '1993-01-01',
     'cache_ttl' => 60 * 24,
 
     /*

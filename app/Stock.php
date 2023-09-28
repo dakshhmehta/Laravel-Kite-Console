@@ -126,7 +126,7 @@ class Stock extends Model
         }
         $candles = collect([]);
 
-        
+
         while ($count > 0) {
             $date  = clone $previousMonth;
             $rates = static::where('symbol', $this->symbol)
@@ -156,14 +156,70 @@ class Stock extends Model
         return $candles;
     }
 
-    public static function allMonthlyCandles($symbol) {
+    public static function allMonthlyCandles($symbol)
+    {
         $data = static::getBySymbol($symbol);
-        
-        $fromDate = Carbon::parse('1993-01-01');
+
+        $fromDate = Carbon::parse(config('app.from_date'));
         $tillDate = Carbon::now();
 
         $candles = $tillDate->diffInMonths($fromDate);
 
         return $data->getMonthlyCandles($candles);
+    }
+
+    public function getWeeklyCandles($count = 1)
+    {
+        $key = md5(__METHOD__ . $this->getCacheKey() . $count);
+        if ($candles = \Cache::get($key, false)) {
+            return $candles;
+        }
+
+        if (Carbon::now()->isWeekend() || (Carbon::now()->isFriday() and Carbon::now()->hour > 15)) {
+            $previousWeek = Carbon::now()->startOfWeek();
+        } else {
+            $previousWeek = Carbon::now()->subWeeks(1)->startOfWeek();
+        }
+
+        $candles = collect([]);
+
+        while ($count > 0) {
+            $date  = clone $previousWeek;
+            $rates = static::where('symbol', $this->symbol)
+                ->where('date', '>=', $date->startOfWeek()->format('Y-m-d'))
+                ->where('date', '<=', $date->endOfWeek()->format('Y-m-d'))
+                ->orderBy('date', 'ASC')->get();
+
+            if ($rates->count() == 0) {
+                break;
+            }
+
+            $c = [];
+            foreach ($rates as &$rate) {
+                $c[] = ['open' => $rate->open, 'high' => $rate->high, 'low' => $rate->low, 'close' => $rate->close];
+            }
+
+            $candles[] = new Candle($c, $date->startOfWeek());
+
+            $count--;
+            $previousWeek = $previousWeek->subWeeks(1);
+        }
+
+        $candles = array_values($candles->reverse()->toArray());
+        \Cache::put($key, $candles, config('app.cache_ttl'));
+
+        return $candles;
+    }
+
+    public static function allWeeklyCandles($symbol)
+    {
+        $data = static::getBySymbol($symbol);
+
+        $fromDate = Carbon::parse(config('app.from_date'));
+        $tillDate = Carbon::now();
+
+        $candles = $tillDate->diffInWeeks($fromDate);
+
+        return $data->getWeeklyCandles($candles);
     }
 }

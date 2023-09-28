@@ -96,7 +96,7 @@ class Monitor
 
 
         foreach ($this->result as &$s) {
-            $fromDate = Carbon::parse('1993-01-01');
+            $fromDate = Carbon::parse(config('app.from_date'));
             $tillDate = (clone $fromDate)->endOfYear();
 
             echo 'Queued: ' . $s->tradingsymbol . "\n";

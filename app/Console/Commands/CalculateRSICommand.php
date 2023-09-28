@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Instrument;
 use App\Models\DailyRSI;
 use App\Models\MonthlyRSI;
+use App\Models\WeeklyRSI;
 use App\Stock;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -44,6 +45,8 @@ class CalculateRSICommand extends Command
             $this->calculateMonthly($symbols);
         } elseif ($type == 'daily') {
             $this->calculateDaily($symbols);
+        } elseif ($type == 'weekly') {
+            $this->calculateWeekly($symbols);
         } else {
             $this->error('Invalid type argument.');
 
@@ -105,6 +108,38 @@ class CalculateRSICommand extends Command
                 ]);
                 $monthlyRSI->rsi = $rsi['rsi'];
                 $monthlyRSI->save();
+
+                $this->info("RSI (14, " . $data[count($data) - 1] . ", " . $odata[$i]->date->format('d-m-Y') . "): " . $rsi['rsi']);
+                $this->warn($odata[$i]->open . ', ' . $odata[$i]->high . ', ' . $odata[$i]->low . ', ' . $odata[$i]->close);
+
+                $previous = $rsi;
+            }
+        }
+    }
+
+    public function calculateWeekly($symbols)
+    {
+        foreach ($symbols as &$symbol) {
+            $instrument = Instrument::getBySymbol($symbol);
+            $odata = collect(Stock::allWeeklyCandles($symbol));
+
+            $period = 14;
+            $previous = [];
+
+            $this->error($symbol);
+
+            for ($i = $period; $i < count($odata); $i++) {
+                $data = $odata->pluck('close')->toArray();
+                $data = array_splice($data, $i - $period, $period + 1);
+
+                $rsi = rsi($data, $period, $previous);
+
+                $weeklyRSI = WeeklyRSI::firstOrNew([
+                    'isin' => $instrument->isin_code,
+                    'date' => $odata[$i]->date->format('Y-m-d'),
+                ]);
+                $weeklyRSI->rsi = $rsi['rsi'];
+                $weeklyRSI->save();
 
                 $this->info("RSI (14, " . $data[count($data) - 1] . ", " . $odata[$i]->date->format('d-m-Y') . "): " . $rsi['rsi']);
                 $this->warn($odata[$i]->open . ', ' . $odata[$i]->high . ', ' . $odata[$i]->low . ', ' . $odata[$i]->close);
