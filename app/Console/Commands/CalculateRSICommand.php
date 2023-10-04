@@ -77,6 +77,8 @@ class CalculateRSICommand extends Command
                     'date' => $odata[$i]->date->format('Y-m-d'),
                 ]);
                 $dailyRSI->rsi = $rsi['rsi'];
+                $dailyRSI->gain = $rsi['gain'];
+                $dailyRSI->loss = $rsi['loss'];
                 $dailyRSI->save();
 
                 $this->info("RSI (14, " . $data[count($data) - 1] . ", " . $odata[$i]->date->format('d-m-Y') . "): " . $rsi['rsi']);
@@ -107,6 +109,8 @@ class CalculateRSICommand extends Command
                     'date' => $odata[$i]->date->format('Y-m-d'),
                 ]);
                 $monthlyRSI->rsi = $rsi['rsi'];
+                $monthlyRSI->gain = $rsi['gain'];
+                $monthlyRSI->loss = $rsi['loss'];
                 $monthlyRSI->save();
 
                 $this->info("RSI (14, " . $data[count($data) - 1] . ", " . $odata[$i]->date->format('d-m-Y') . "): " . $rsi['rsi']);
@@ -139,6 +143,8 @@ class CalculateRSICommand extends Command
                     'date' => $odata[$i]->date->format('Y-m-d'),
                 ]);
                 $weeklyRSI->rsi = $rsi['rsi'];
+                $weeklyRSI->gain = $rsi['gain'];
+                $weeklyRSI->loss = $rsi['loss'];
                 $weeklyRSI->save();
 
                 $this->info("RSI (14, " . $data[count($data) - 1] . ", " . $odata[$i]->date->format('d-m-Y') . "): " . $rsi['rsi']);

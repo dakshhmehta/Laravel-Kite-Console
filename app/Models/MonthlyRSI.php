@@ -11,4 +11,10 @@ class MonthlyRSI extends Model
 
     protected $guarded = [];
     protected $table = 'monthly_rsi';
+
+    protected $casts = [
+        'rsi' => 'float',
+        'gain' => 'float',
+        'loss' => 'float'
+    ];
 }
